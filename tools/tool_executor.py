@@ -1,11 +1,11 @@
-from tools import calculator
+from tools import addition
 from tools import multiply
 
 def execute_tool (tool_name, arguments):
 
-    if tool_name == "calculator":
+    if tool_name == "add":
 
-        return calculator.calculator(
+        return addition.add(
             arguments["a"],
             arguments["b"]
         )

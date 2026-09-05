@@ -1,4 +1,4 @@
-from tools import calculator
+from tools import addition
 from tools import multiply
 
-tools = calculator.tool_definition + multiply.tool_definition
+tools = addition.tool_definition + multiply.tool_definition

@@ -11,7 +11,8 @@ class Agent:
         self.messages = [{
 
             "role": "system",
-            "content": "You are a helpful AI assistant. Always respond in English."
+            "content": "You are a helpful AI assistant. Always respond in English. "
+                       "start with just saying HI! i mean just for welcome message, then respond naturally"
 
         }]
 
@@ -41,13 +42,14 @@ class Agent:
 
             self.messages.append(response.message)
 
-            print("DEBUG RESPONSE:", response.message)
+            # print("DEBUG RESPONSE:", response.message)
+            # print("DEBUG TOOL CALLS:", response.message.tool_calls)
 
             if not response.message.tool_calls:
 
-                print("DEBUG CONTENT:", repr(response.message.content))
-                print("DEBUG THINKING:", repr(response.message.thinking))
-                print("DEBUG TOOL CALLS:", response.message.tool_calls)
+                # print("DEBUG CONTENT:", repr(response.message.content))
+                # print("DEBUG THINKING:", repr(response.message.thinking))
+                # print("DEBUG TOOL CALLS:", response.message.tool_calls)
 
                 return  response.message.content
 
