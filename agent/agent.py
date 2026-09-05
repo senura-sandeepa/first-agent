@@ -1,6 +1,7 @@
 from ollama import chat
 
-from tools import calculator as calc
+from tools import tool_registry
+from tools.tool_executor import execute_tool
 
 class Agent:
 
@@ -17,7 +18,7 @@ class Agent:
         #model name
         self.model = "qwen3:4b"
 
-        self.tools = calc.calculator_tool
+        self.tools = tool_registry.tools
 
     def chat (self, user_input):
 
@@ -28,39 +29,40 @@ class Agent:
 
         })
 
-        response = chat (
+        while True:
 
-            model = self.model,
-            messages = self.messages,
-            tools = self.tools
+            response = chat (
 
-        )
+                model = self.model,
+                messages = self.messages,
+                tools = self.tools
 
-        self.messages.append(response.message)
+            )
 
-        if response.message.tool_calls:
-            tool_call = response.message.tool_calls[0]
+            self.messages.append(response.message)
 
-            if tool_call.function.name == "calculator":
-                a = tool_call.function.arguments["a"]
-                b = tool_call.function.arguments["b"]
+            print("DEBUG RESPONSE:", response.message)
 
-                result = calc.calculator(a, b)
+            if not response.message.tool_calls:
 
-                # print("Tool result", result)
+                print("DEBUG CONTENT:", repr(response.message.content))
+                print("DEBUG THINKING:", repr(response.message.thinking))
+                print("DEBUG TOOL CALLS:", response.message.tool_calls)
+
+                return  response.message.content
+
+            for tool_call in response.message.tool_calls:
+
+                result = execute_tool(
+
+                    tool_call.function.name,
+                    tool_call.function.arguments
+
+                )
 
                 self.messages.append({
                     "role": "tool",
+                    "tool_name": tool_call.function.name,
                     "content": str(result)
                 })
 
-                final_response = chat(
-                    model = self.model,
-                    messages = self.messages,
-                    tools = self.tools
-                )
-
-                return final_response.message.content
-            return None
-
-        return response.message.content

@@ -1,12 +1,13 @@
-def calculator (a, b):
-    return a + b
+def multiply(a, b):
+    return a * b
+
 
 tool_definition = [
     {
         "type": "function",
         "function": {
-            "name": "calculator",
-            "description": "Add two numbers together",
+            "name": "multiply",
+            "description": "Multiply two numbers together",
             "parameters": {
                 "type": "object",
                 "properties": {
