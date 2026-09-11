@@ -62,6 +62,8 @@ class Agent:
 
                 )
 
+                # print("DEBUG TOOL CALLS:", response.message.tool_calls)
+
                 self.messages.append({
                     "role": "tool",
                     "tool_name": tool_call.function.name,
