@@ -62,6 +62,15 @@ class Agent:
 
                 )
 
+                if not result.success:
+
+                    if result.error_type == "unknown tool":
+                        return f"I don't know how to use the tool '{tool_call.function.name}'."
+
+                    return f"Tool failed: {result.error})"
+
+                # print("DEBUG TOOL RESULT:", result)
+
                 # print("DEBUG TOOL CALLS:", response.message.tool_calls)
 
                 self.messages.append({
