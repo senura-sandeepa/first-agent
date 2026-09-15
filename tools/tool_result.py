@@ -3,7 +3,7 @@ class ToolResult:
     def __init__(
             self,
             success: bool,
-            result=None,
+            result = None,
             error: str | None = None,
             error_type: str | None = None
     ):

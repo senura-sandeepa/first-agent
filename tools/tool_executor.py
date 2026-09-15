@@ -1,5 +1,6 @@
 from tools.tool_registry import tool_functions
 from tools.tool_result import ToolResult
+from tools.argument_validator import validate_arguments
 
 def execute_tool (tool_name, arguments):
 
@@ -15,6 +16,11 @@ def execute_tool (tool_name, arguments):
         )
 
     try:
+
+        validation = validate_arguments(tool_name, arguments)
+
+        if not validation.success:
+            return validation
 
         # 1. Tool succeeds
         result = tool(**arguments)

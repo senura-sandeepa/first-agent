@@ -18,8 +18,12 @@ This project is a learning-focused implementation of an AI agent from scratch, w
 - Uses a tool executor to execute tools requested by the AI
 - Uses a structured `ToolResult` object for tool execution results
 - Tracks tool execution errors with an `error_type`
+- Validates tool arguments before execution
+- Checks for missing required arguments, unexpected arguments, and invalid argument types
+- Uses a type mapping for supported tool schema types
 - Currently distinguishes between:
   - `unknown tool`
+  - `invalid arguments`
   - `execution error`
 - Sends tool results back to the AI
 - Automatically continues the tool-calling loop until the AI generates a final response
@@ -39,7 +43,8 @@ first-agent/
 │   ├── multiply.py
 │   ├── tool_executor.py
 │   ├── tool_registry.py
-│   └── tool_result.py
+│   ├── tool_result.py
+│   └── argument_validator.py
 │
 ├── main.py
 ├── .gitignore
@@ -90,7 +95,7 @@ The current architecture separates the responsibilities of the agent, tool regis
                                  └─────────────────┘
 ```
 
-`addition.py` and `multiply.py` are tool modules/functions rather than classes. `ToolResult` is currently the main class used to represent the outcome of tool execution.
+`addition.py` and `multiply.py` are tool modules/functions rather than classes. `ToolResult` is currently the main class used to represent the outcome of tool execution. `argument_validator.py` is responsible for validating arguments before an existing tool is executed.
 
 ## How It Works
 
@@ -100,12 +105,14 @@ The current architecture separates the responsibilities of the agent, tool regis
 4. The model decides whether it needs to use a tool.
 5. If a tool is requested, the agent passes the tool name and arguments to `execute_tool()`.
 6. The tool executor looks up the requested function through the tool registry.
-7. The requested Python function is executed.
-8. The executor returns a `ToolResult` object describing the outcome.
-9. If execution succeeds, the result is added to the conversation as a tool message.
-10. The updated conversation is sent back to Qwen.
-11. The tool-calling loop continues until Qwen produces a final response.
-12. If a tool fails, the agent currently handles the failure according to its `error_type`.
+7. The executor validates the supplied arguments using `validate_arguments()`.
+8. If validation fails, the validation `ToolResult` is returned and the tool is not executed.
+9. If validation succeeds, the requested Python function is executed.
+10. The executor returns a `ToolResult` object describing the outcome.
+11. If execution succeeds, the result is added to the conversation as a tool message.
+12. The updated conversation is sent back to Qwen.
+13. The tool-calling loop continues until Qwen produces a final response.
+14. If a tool fails, the agent currently handles the failure according to its `error_type`.
 
 ## Tool Registry
 
@@ -127,6 +134,44 @@ tool_functions[tool_name] = getattr(module, tool_name)
 
 This means a tool does not need to be manually added to a separate function mapping.
 
+## Argument Validation
+
+Before a tool is executed, `argument_validator.py` checks the arguments against the tool's `tool_definition`.
+
+The validator currently checks:
+
+```text
+Required arguments
+        ↓
+Unexpected arguments
+        ↓
+Argument types
+        ↓
+ToolResult(success=True)
+```
+
+For invalid input, it returns a failed `ToolResult`:
+
+```python
+ToolResult(
+    success=False,
+    error="Invalid type for argument: a",
+    error_type="invalid arguments"
+)
+```
+
+Supported schema types are currently mapped as:
+
+```python
+TYPE_MAPPING = {
+    "number": (int, float),
+    "string": (str,),
+    "boolean": (bool,)
+}
+```
+
+This validation layer prevents invalid arguments from reaching the actual Python tool function.
+
 ## Tool Execution
 
 The tool executor is responsible for safely locating and executing a requested tool.
@@ -141,10 +186,11 @@ Python function
 ToolResult
 ```
 
-The executor currently handles two failure categories:
+The executor currently handles three failure categories:
 
 ```text
 unknown tool
+invalid arguments
 execution error
 ```
 
@@ -200,6 +246,14 @@ execute_tool("add", {"a": 5, "b": 6})
         ↓
 
 tool registry finds addition.add()
+
+        ↓
+
+Argument validation
+
+        ↓
+
+Arguments valid ✅
 
         ↓
 
@@ -291,6 +345,13 @@ The goal is not only to make an agent that works, but to understand and graduall
 
 ## Current Development Direction
 
-The project is being developed incrementally. The current focus is improving tool error categorization and building a more reliable recovery and retry system.
+The project is being developed incrementally.
+
+Current focus:
+
+- Building a reliable argument validation layer
+- Keeping tool execution responsibilities separated
+- Improving tool error categorization
+- Building a more reliable recovery and retry system
 
 Future improvements will be added as the architecture evolves.
